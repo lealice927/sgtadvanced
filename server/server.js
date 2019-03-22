@@ -9,7 +9,7 @@ const server = express();
 
 server.use(express.static(__dirname + '/html')); //__dirname (directory name) is the pathway
 server.use(express.urlencoded({ extended: false })) //have express pull body data that is urlencoded and place it into an object called "body"
-server.use(express.json() )//use for things like axios
+server.use(express.json())//use for things like axios
 
 //make an endpoint to handle retrieving the grades of all students
 server.get('/api/grades', (req, res) => { //this is an EVENT! when this server receives the url from the port 3001, run this function (req,res)
@@ -43,33 +43,60 @@ server.get('/api/grades', (req, res) => { //this is an EVENT! when this server r
 // INSERT INTO `grades` SET `surname`="Le", `givenname`="Alice",`course`="math", `grade`=100, `added`=NOW()
 
 server.post('/api/grades', (request, response) => {
-    if(request.body.name === undefined || request.body.course === undefined || request.body.grade === undefined){
+    if (request.body.name === undefined || request.body.course === undefined || request.body.grade === undefined) {
         response.send({
             //respond to the client with an appropriate error message
-            success: false, 
+            success: false,
             error: 'invalid name, course, or grade'
         });
         //if it doesn't return anything, exits the function
         return;
     }
     //connect to the database
-    db.connect( ()=>{
+    db.connect(() => {
         const name = request.body.name.split(" ");
-        const query = 'INSERT INTO `grades` SET `surname`="'+name[1]+'", `givenname`="'+name[0]+'",`course`="'+request.body.course+'", `grade`=100, `added`=NOW()';
-        db.query(query, (error, result)=>{
-            if(!error){
+        const query = 'INSERT INTO `grades` SET `surname`="' + name[1] + '", `givenname`="' + name[0] + '",`course`="' + request.body.course + '", `grade`=100, `added`=NOW()';
+        db.query(query, (error, result) => {
+            if (!error) {
                 response.send({
                     success: true,
                     new_id: result.insertId
                 })
             } else {
                 response.send({
-                    success: false, 
+                    success: false,
                     error //this is the same as error: error but with es6 and structuring, we can leave it as is
                 })
             }
         })
         // response.send(query);
+    })
+})
+
+server.delete('/api/grades', (request, response) => {
+    // console.log(request.query);
+    // response.send(request.query);
+    if (request.query.student_id === undefined) {
+        response.send({
+            success: false,
+            error: 'must provide a student id for delete'
+        });
+        return;
+    }
+    db.connect(() => {
+        const query = "DELETE FROM `grades` WHERE `id`= " + request.query.student_id;
+        db.query(query, (error, result) => {
+            if (!error) {
+                response.send({
+                    success: true,
+                })
+            } else {
+                response.send({
+                    success: false,
+                    error
+                })
+            }
+        })
     })
 })
 

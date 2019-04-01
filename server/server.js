@@ -1,15 +1,17 @@
 const express = require('express'); //load the express library into the file
-const mysql = require('mysql');
-const mysqlcredentials = require('./mysqlcreds.js');
+const mysql = require('mysql'); //load the mysql library
+const mysqlcredentials = require('./mysqlcreds.js'); //load the credentials
+const cors = require('cors');
 
 //using the credientials that we loaded, establish a preliminary connection to the database
 const db = mysql.createConnection(mysqlcredentials);
 
 const server = express();
 
+server.use(cors()); //cors() is a method, this will allow us to gain access from CORS
 server.use(express.static(__dirname + '/html')); //__dirname (directory name) is the pathway
 server.use(express.urlencoded({ extended: false })) //have express pull body data that is urlencoded and place it into an object called "body"
-server.use(express.json())//use for things like axios
+server.use(express.json()) //use for things like axios
 
 //make an endpoint to handle retrieving the grades of all students
 server.get('/api/grades', (req, res) => { //this is an EVENT! when this server receives the url from the port 3001, run this function (req,res)
@@ -55,7 +57,8 @@ server.post('/api/grades', (request, response) => {
     //connect to the database
     db.connect(() => {
         const name = request.body.name.split(" ");
-        const query = 'INSERT INTO `grades` SET `surname`="' + name[1] + '", `givenname`="' + name[0] + '",`course`="' + request.body.course + '", `grade`=100, `added`=NOW()';
+        const grade = request.body.grade;
+        const query = 'INSERT INTO `grades` SET `surname`="' + name[1] + '", `givenname`="' + name[0] + '",`course`="' + request.body.course + '", `grade`="' + grade + '", `added`=NOW()';
         db.query(query, (error, result) => {
             if (!error) {
                 response.send({
@@ -73,10 +76,9 @@ server.post('/api/grades', (request, response) => {
     })
 })
 
-server.delete('/api/grades', (request, response) => {
-    // console.log(request.query);
-    // response.send(request.query);
-    if (request.query.student_id === undefined) {
+server.delete('/api/grades/:student_id', (request, response) => {
+    console.log(request.params);
+    if (request.params.student_id === undefined) {
         response.send({
             success: false,
             error: 'must provide a student id for delete'
@@ -84,7 +86,7 @@ server.delete('/api/grades', (request, response) => {
         return;
     }
     db.connect(() => {
-        const query = "DELETE FROM `grades` WHERE `id`= " + request.query.student_id;
+        const query = "DELETE FROM `grades` WHERE `id`= " + request.params.student_id;
         db.query(query, (error, result) => {
             if (!error) {
                 response.send({

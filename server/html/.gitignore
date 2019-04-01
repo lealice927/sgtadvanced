@@ -1,0 +1,8 @@
+.DS_Store
+.idea
+README.md
+
+node_modules
+mysqlcreds.js
+# you do not want to add these files to github, this is why we add them to .gitignore
+# the credientals of your db here is different then the credientals of your db on your server
